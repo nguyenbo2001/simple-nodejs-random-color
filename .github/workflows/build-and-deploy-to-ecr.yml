@@ -1,12 +1,12 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       version:
@@ -47,7 +47,7 @@ jobs:
       
     - name: Build Docker image
       run: |
-        docker build -t nodejs-random-color:latest .
+        docker build -t nodejs-random-color:${{ inputs.version }} .
         
     - name: Tag and push image to ECR
       run: |
