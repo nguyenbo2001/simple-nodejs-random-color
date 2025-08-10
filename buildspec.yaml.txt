@@ -1,0 +1,39 @@
+version: 0.2
+
+env:
+  secrets-manager:
+    DOCKER_USERNAME: dockerhub-username-secret
+    DOCKER_PASSWORD: dockerhub-password-secret
+phases:
+  install:
+    on-failure: ABORT
+    commands:
+      - echo "Install phase"
+      - aws --version
+      - docker --version
+    runtime-versions:
+      nodejs: 18
+      python: 3.8
+  pre_build:
+    commands:
+      - echo Login to Dockerhub...
+      - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+      - echo Login to ECR
+      - aws --version
+      - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 637423425136.dkr.ecr.ap-southeast-1.amazonaws.com
+      - REPOSITORY_URI=637423425136.dkr.ecr.ap-southeast-1.amazonaws.com/bonguyen/simple-nodejs-random-color
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+  build:
+    commands:
+      - echo "Hello World"
+      - echo Building started on `date`
+      - docker build -t simple-nodejs-random-color .
+      - docker tag simple-nodejs-random-color:latest $REPOSITORY_URI:latest
+      - docker tag simple-nodejs-random-color:latest $REPOSITORY_URI:$COMMIT_HASH
+      - echo Build done
+  post_build:
+    commands:
+      - echo "Pushing the DOcker image..."
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$COMMIT_HASH
+      - echo Build completed on `date`
